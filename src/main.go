@@ -23,5 +23,6 @@ type User struct {
 }
 
 func main() {
-
+	// csvFilePath := "../material/company-file-data/company-file-all.csv"
+	// download.ReadCsvAndDownLoad(csvFilePath)
 }
