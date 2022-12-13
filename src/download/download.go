@@ -116,14 +116,15 @@ func downOneFile(url string, saveFileName string) {
 	if err != nil {
 		log.Fatalf("copy %s failed, err:%v\n", saveFileName, err)
 	}
-	fmt.Printf("[DOWNLOAD] %s successed!", saveFileName)
+	fmt.Printf("[DOWNLOAD] %s successed!\n", saveFileName)
 }
 
 // 提前预存需要的公司名字
 func init() {
-	companyNameFilePath := "../material/companyName2.txt"
-	getCompany(companyNameFilePath)
-
+	companyNameFilePath1 := "../material/company-file-data/companyName1.txt"
+	companyNameFilePath2 := "../material/company-file-data/companyName2.txt"
+	getCompany(companyNameFilePath1)
+	getCompany(companyNameFilePath2)
 }
 
 // 判断是否是需要的公司

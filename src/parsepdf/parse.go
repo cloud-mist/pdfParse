@@ -6,15 +6,14 @@ import (
 	"github.com/ledongthuc/pdf"
 )
 
-// 解析pdf内容
-// 分割
+// 解析pdf
 func ReadPdf(path string) (string, error) {
 	f, r, err := pdf.Open(path)
-	// remember close file
-	defer f.Close()
 	if err != nil {
 		return "", err
 	}
+	defer f.Close()
+
 	var buf bytes.Buffer
 	b, err := r.GetPlainText()
 	if err != nil {
@@ -23,3 +22,5 @@ func ReadPdf(path string) (string, error) {
 	buf.ReadFrom(b)
 	return buf.String(), nil
 }
+
+// 分割

@@ -18,7 +18,8 @@ func main() {
 	// 分词
 
 	parsepdf.Divide("../../txts/三生国健.txt")
-	lawWordsFilePath := "../material/law-words-copy.txt"
+	// parsepdf.FilterStopWords()
+	lawWordsFilePath := "../material/wordsFiles/law-words-copy.txt"
 	parsepdf.AddCompareWords(lawWordsFilePath)
-	parsepdf.Count(parsepdf.Words)
+	parsepdf.Count(parsepdf.PdfResWords)
 }

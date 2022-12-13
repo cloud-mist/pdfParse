@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/go-ego/gse"
 	"github.com/olekukonko/tablewriter"
 	"github.com/yanyiwu/gojieba"
 )
@@ -16,22 +17,31 @@ import (
 // 1.加完词库
 // 2. 再分词
 var (
-	Words           []string        // pdf的分词结果
+	PdfResWords []string // pdf的分词结果
+	// FilterResWords  []string        // 分词过滤后的结果
 	compareWordsMap map[string]bool // 当前需要放入的词库
 	total           map[string]int  // 统计的词汇情况
 )
 
 func Divide(txtFilePath string) {
-	newJieba := gojieba.NewJieba()
-	defer newJieba.Free()
+	// newJieba := gojieba.NewJieba()
+	// defer newJieba.Free()
+	lawWordsFilePath := "../material/wordsFiles/law-words.txt"
+	accountingWordsFilePath := "../material/wordsFiles/accounting-words.txt"
+	financialWordsFilePath := "../material/wordsFiles/financial-words.txt"
+	stopWordsPath := "../material/wordsFiles/stop-words-copy.txt"
+
+	newJieba, _ := gse.New()
+	newJieba.LoadDict(lawWordsFilePath + "," + accountingWordsFilePath + "," + financialWordsFilePath)
+	newJieba.LoadStop(stopWordsPath)
 
 	// 添加法律,会计，金融词库
-	lawWordsFilePath := "../material/law-words.txt"
-	accountingWordsFilePath := "../material/accounting-words.txt"
-	financialWordsFilePath := "../material/financial-words.txt"
-	addWordsToDic(lawWordsFilePath, newJieba)
-	addWordsToDic(accountingWordsFilePath, newJieba)
-	addWordsToDic(financialWordsFilePath, newJieba)
+	// lawWordsFilePath := "../material/wordsFiles/law-words.txt"
+	// accountingWordsFilePath := "../material/wordsFiles/accounting-words.txt"
+	// financialWordsFilePath := "../material/wordsFiles/financial-words.txt"
+	// addWordsToDic(lawWordsFilePath, newJieba)
+	// addWordsToDic(accountingWordsFilePath, newJieba)
+	// addWordsToDic(financialWordsFilePath, newJieba)
 
 	// 分词
 	f, err := os.Open(txtFilePath)
@@ -48,8 +58,8 @@ func Divide(txtFilePath string) {
 		if err != nil {
 			fmt.Println("read err: ", err)
 		}
-		Words = newJieba.Cut(line, true) // words []string ， true hmm开启，
-		fmt.Println(Words)
+		PdfResWords = newJieba.Trim(newJieba.Cut(line, true)) // words []string ， true hmm开启，
+		fmt.Println(PdfResWords)
 	}
 }
 
@@ -123,3 +133,37 @@ func AddCompareWords(wordsFilePath string) {
 		compareWordsMap[word] = true
 	}
 }
+
+// 过滤stopwords
+// func FilterStopWords() {
+// 	stopWordsMap := make(map[string]bool)
+// 	stopWordsPath := "../material/wordsFiles/stop-words-copy.txt"
+// 	f, err := os.Open(stopWordsPath)
+// 	if err != nil {
+// 		log.Fatalf("[Filter] Open stopWordsFile Failed! err: %v\n", err)
+// 	}
+// 	defer f.Close()
+//
+// 	// 读取每个词
+// 	reader := bufio.NewReader(f)
+// 	for {
+// 		word, err := reader.ReadString('\n')
+// 		if err == io.EOF {
+// 			break
+// 		}
+//
+// 		if err != nil {
+// 			fmt.Println("read err: ", err)
+// 		}
+//
+// 		word = strings.TrimSpace(word)
+// 		stopWordsMap[word] = true
+// 	}
+//
+// 	// 过滤
+// 	for i := range pdfResWords {
+// 		if !stopWordsMap[pdfResWords[i]] {
+// 			FilterResWords = append(FilterResWords, pdfResWords[i])
+// 		}
+// 	}
+// }
