@@ -1,25 +1,18 @@
 package main
 
-import "hello/parsepdf"
+import "hello/download"
 
 func main() {
 	// 下载
-	// csvFilePath := "../material/company-file-data/company-file-all.csv"
-	// download.ReadCsvAndDownLoad(csvFilePath)
-
-	// 转换为pdf
-	// pdf.DebugOn = true
-	// content, err := parse.ReadPdf("../../downloadsPDF/三一重能股份有限公司-8-1 发行人及保荐机构回复意见.pdf") // Read local pdf file
-	// if err != nil {
-	// 	panic(err)
-	// }
-	// fmt.Println(content)
+	// csvFilePath := "company-file-V3.csv"
+	csvFilePath := "../material/company-file-data/company-file-V3.csv"
+	download.ReadCsvAndDownLoad(csvFilePath)
 
 	// 分词
+	// parsepdf.Divide("../../txts/三生国健.txt")
+	// // parsepdf.FilterStopWords()
+	// lawWordsFilePath := "../material/wordsFiles/law-words.txt"
+	// parsepdf.AddCompareWords(lawWordsFilePath)
+	// parsepdf.Count(parsepdf.PdfResWords)
 
-	parsepdf.Divide("../../txts/三生国健.txt")
-	// parsepdf.FilterStopWords()
-	lawWordsFilePath := "../material/wordsFiles/law-words-copy.txt"
-	parsepdf.AddCompareWords(lawWordsFilePath)
-	parsepdf.Count(parsepdf.PdfResWords)
 }

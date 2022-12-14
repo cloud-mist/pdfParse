@@ -1,64 +1,35 @@
 package download
 
 import (
-	"bufio"
 	"encoding/csv"
 	"fmt"
+	"hello/database"
 	"io"
 	"log"
 	"net/http"
 	"os"
-	"strings"
 )
 
 var (
 	companyNameMap map[string]bool
 )
 
-type csvFile struct {
-	id             string
-	companyLink    string
-	companyName    string
-	fileAddr       string
-	fileName       string
-	disclosureDate string
+type CsvFile struct {
+	Id             string
+	CompanyLink    string
+	CompanyName    string
+	FileAddr       string
+	FileName       string
+	DisclosureDate string
 }
 
-// 1.读取companyname, 将其放入切片中
-func getCompany(filepath string) {
-	companyNameMap = make(map[string]bool)
-	// 打开文件
-	f, err := os.Open(filepath)
-	if err != nil {
-		fmt.Printf("open %s failed\n : err%v", filepath, err)
-		return
-	}
-	defer f.Close()
-
-	// 按行读取
-	reader := bufio.NewReader(f)
-	for {
-		line, err := reader.ReadString('\n')
-		if err == io.EOF {
-			break
-		}
-
-		if err != nil {
-			fmt.Println("read err: ", err)
-		}
-
-		line = strings.TrimSpace(line) // 💫 readstring 会连带\n 保存,所以要剔除
-		companyNameMap[line] = true    // 将每个公司置为true
-	}
-}
-
-// 2.读取csv文件，返回需要的信息
+// 2.读取csv文件
 func ReadCsvAndDownLoad(filepath string) {
+	// {{{
 	// 打开csv文件
 	f, err := os.Open(filepath)
 	if err != nil {
-		fmt.Printf("open %s failed\n : err%v", filepath, err)
-		os.Exit(1)
+		log.Fatalf("Open %s failed\n : err%v", filepath, err)
 	}
 	defer f.Close()
 
@@ -72,30 +43,39 @@ func ReadCsvAndDownLoad(filepath string) {
 		if err != nil {
 			log.Fatal(err)
 		}
-		csvRec := csvFile{record[0], record[1], record[2], record[3], record[4], record[5]}
+
+		// 下载
+		csvRec := CsvFile{
+			Id:             record[0],
+			CompanyLink:    record[1],
+			CompanyName:    record[2],
+			FileAddr:       record[4],
+			FileName:       record[9],
+			DisclosureDate: record[10]}
 		// 每条记录放入csvRec结构体
-		if isCompany(csvRec.companyName, csvRec.fileName) {
-			// 下载
-			baseSaveUrl := "../../downloadsPDF/"
-			fileUrl := csvRec.fileAddr
+		index := csvRec.Id
+		saveFileName := index + "-" + csvRec.FileName + ".pdf"
+		// fileUrl := csvRec.FileAddr
+		// saveFileBasePath := "../../downloadsPDF/"
+		// saveFilePath := saveFileBasePath + saveFileName
+		// downOneFile(fileUrl, saveFilePath, index)
+		// downOneFile(fileUrl, saveFileName, index) // 当前文件夹保存
 
-			// filename linux不能超过255字节
-			saveFileName := baseSaveUrl + csvRec.companyName + "-" + csvRec.fileName[:] + ".pdf"
-			if len(saveFileName) > 250 {
-				saveFileName = baseSaveUrl + csvRec.companyName + "-" + csvRec.fileName[:100] + ".pdf"
-			}
-
-			downOneFile(fileUrl, saveFileName)
-			// Todo: 必要内容保存到数据库
-
+		// Todo: 必要内容保存到数据库
+		pf := database.PdfFile{
+			ID:          csvRec.Id,
+			CompanyLink: csvRec.CompanyLink,
+			CompanyName: csvRec.CompanyName,
+			FileName:    saveFileName,
 		}
-
+		database.Add2db(pf)
 	}
-
+	// }}}
 }
 
 // 下载文件且重命名
-func downOneFile(url string, saveFileName string) {
+func downOneFile(url string, saveFileName string, index string) {
+	// {{{
 	// 请求
 	resp, err := http.Get(url)
 	if err != nil {
@@ -111,30 +91,11 @@ func downOneFile(url string, saveFileName string) {
 	defer out.Close()
 
 	// 将响应copy到文件
-	fmt.Println("Start download...")
+	fmt.Printf("File<%s> Start Download...\n", index)
 	_, err = io.Copy(out, resp.Body)
 	if err != nil {
-		log.Fatalf("copy %s failed, err:%v\n", saveFileName, err)
+		log.Fatalf("Copy <%s>%s Failed, err:%v\n", index, saveFileName, err)
 	}
-	fmt.Printf("[DOWNLOAD] %s successed!\n", saveFileName)
-}
-
-// 提前预存需要的公司名字
-func init() {
-	companyNameFilePath1 := "../material/company-file-data/companyName1.txt"
-	companyNameFilePath2 := "../material/company-file-data/companyName2.txt"
-	getCompany(companyNameFilePath1)
-	getCompany(companyNameFilePath2)
-}
-
-// 判断是否是需要的公司
-func isCompany(companyName string, fileName string) bool {
-	if companyNameMap[companyName] &&
-		strings.Contains(fileName, "发行人") &&
-		strings.Contains(fileName, "保荐机构") &&
-		strings.Contains(fileName, "回复") {
-		return true
-	}
-
-	return false
+	fmt.Printf("[DOWNLOAD] %s Succeeded!\n", saveFileName)
+	// }}}
 }
