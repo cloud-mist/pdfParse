@@ -59,8 +59,7 @@ func ReadCsvAndDownLoad(filepath string) {
 		// saveFileBasePath := "../../downloadsPDF/"
 		// saveFilePath := saveFileBasePath + saveFileName
 		// downOneFile(fileUrl, saveFilePath, index)
-		// downOneFile(fileUrl, saveFileName, index) // 当前文件夹保存
-
+		//
 		// Todo: 必要内容保存到数据库
 		pf := database.PdfFile{
 			ID:          csvRec.Id,
@@ -68,7 +67,7 @@ func ReadCsvAndDownLoad(filepath string) {
 			CompanyName: csvRec.CompanyName,
 			FileName:    saveFileName,
 		}
-		database.Add2db(pf)
+		database.Db.Create(&pf)
 	}
 	// }}}
 }

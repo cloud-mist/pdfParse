@@ -22,6 +22,10 @@ type PdfFile struct {
 	Frequency   int    // 问询次数
 	FileName    string // 下载的pdf名字
 
+	QueCount int    // 问题个数
+	QueText  string // 问题有哪些
+
+	AllTextLen    int // 问询函文本总长度
 	QueryTextLen  int // 问询文本长度
 	AnswerTextLen int // 回答文本长度
 
@@ -30,20 +34,11 @@ type PdfFile struct {
 	LawVocLen     int // 回答文本中 法律词汇个数
 }
 
-// 添加记录
-func Add2db(pf PdfFile) {
-	Db.Create(&pf) // 通过数据的指针来创建
-}
-
-func Updatedb(pf PdfFile) {
-	Db.Model(&pf).Updates(pf)
-}
-
-func Init() {
+func initDB() {
 	Db, _ = gorm.Open(sqlite.Open("./database/pdfFilesData.db"))
 	Db.AutoMigrate(&PdfFile{})
 }
 
 func init() {
-	Init()
+	initDB()
 }
