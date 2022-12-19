@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"hello/download"
 	"hello/parsepdf"
 	"os"
 	"path/filepath"
@@ -18,8 +19,8 @@ func main() {
 
 //1. 下载
 func mainDownload() {
-	// csvFilePath := "../material/company-file-data/company-file-V3.csv"
-	// download.ReadCsvAndDownLoad(csvFilePath)
+	csvFilePath := "../material/company-file-data/company-file-V3.csv"
+	download.ReadCsvAndDownLoad(csvFilePath)
 }
 
 //2. 统计

@@ -20,19 +20,22 @@ var (
 	compareWordsMap map[string]bool // 当前需要放入的词库
 	total           map[string]int  // 统计的词汇情况
 	vocLen          int
+	newJieba        gse.Segmenter
 )
 
-func Divide(txtFilePath string) {
+func init() {
 	lawWordsFilePath := "../material/wordsFiles/law-words.txt"
 	accountingWordsFilePath := "../material/wordsFiles/accounting-words.txt"
 	financialWordsFilePath := "../material/wordsFiles/financial-words.txt"
 	stopWordsPath := "../material/wordsFiles/stop-words-copy.txt"
 
-	newJieba, _ := gse.New()
+	newJieba, _ = gse.New()
 	newJieba.LoadDict(lawWordsFilePath + "," + accountingWordsFilePath + "," + financialWordsFilePath)
 	// newJieba.LoadDict(OtherWordsDic()) // 其他词库
 	newJieba.LoadStop(stopWordsPath)
+}
 
+func Divide(txtFilePath string) {
 	// 分词
 	f, err := os.Open(txtFilePath)
 	if err != nil {
