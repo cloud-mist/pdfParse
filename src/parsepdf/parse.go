@@ -8,6 +8,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"regexp"
 	"strings"
 
 	"github.com/ledongthuc/pdf"
@@ -16,6 +17,7 @@ import (
 var (
 	totalLength, queLength, answerLength int
 	indexTitle                           map[string]bool // 目录的各个标题
+	signTitle                            int
 )
 
 // pdf解析成txt
@@ -44,9 +46,8 @@ func ReadPdf(path string) {
 }
 
 // 利用工具： `pdftotext` ,速度是自己写的6倍
-func ReadPdfV2(path string) {
+func ReadPdfV2(path string, textFilePath string) {
 	//{{{
-	textFilePath := "../material/tmpFile/tmp.txt"
 	cmd := exec.Command("pdftotext", path, textFilePath)
 
 	err := cmd.Run()
@@ -77,9 +78,11 @@ func DivideTwoParts() {
 	writeQue := bufio.NewWriter(f1)
 	writeAns := bufio.NewWriter(f2)
 
+	// 全局变量初始化
 	totalLength, queLength, answerLength = 0, 0, 0
 	turn := 0 // 开关
 	indexTitle = make(map[string]bool)
+	signTitle = 0
 
 	reader := bufio.NewReader(f)
 	for {
@@ -164,32 +167,90 @@ func WriteSomeParseResToDB(id string) {
 // ---------------------------------------------------
 // 辅助函数
 
-func init() {
-}
-func addTitleMap(line string) {
+func addTitleMapV2(line string) {
 	//{{{
-	bigTitle := map[string]bool{
-		"一": true,
-		"二": true,
-		"三": true,
-		"四": true,
-		"五": true,
-		"六": true,
-		"七": true,
-		"八": true,
-		"九": true,
-		"十": true,
-	}
-	titleDivideLine := "......."
+	reg := regexp.MustCompile(`(问题)?\d+.*`)
+	res := reg.FindString(line)
 
-	// 如果带有`....` ,不是大标题,不是小标题, 必须至少有一个数字,就加入map
-	if strings.Index(line, titleDivideLine) != -1 &&
-		(bigTitle[string([]rune(line)[0])] != true) &&
-		isLittleTitle(line) &&
-		isIncludeNum(line) {
-		indexTitle[formatTitle(line)] = true // 将标题加入map
+	titleDivideLine := "......."
+	if strings.Index(line, titleDivideLine) != -1 && strings.Index(line, "目录") == -1 {
+		if len(res) != 0 {
+			indexTitle[formatTitle(line)] = true
+		}
 	}
 	//}}}
+}
+
+func addTitleMap(line string) {
+	titleDivideLine := "......."
+
+	// 只有在是目录标题，且不是目录两字的标题的时候运行
+	if strings.Index(line, titleDivideLine) != -1 &&
+		strings.Index(line, "目录") == -1 && strings.Index(line, "目 录") == -1 {
+		indexTitleLength := len(indexTitle)
+
+		if indexTitleLength == 0 {
+			indexTitle[formatTitle(line)] = true
+		} else if (indexTitleLength == 1) && (signTitle == 0) {
+			if hasTwoLevelTitle(line) {
+				if hasPrombleInTitle(line) {
+					// 如果 有两级标题，且问题在二级标题里，那么清空一级标题，且标记;
+					indexTitle = make(map[string]bool)
+					indexTitle[formatTitle(line)] = true
+					signTitle = 22
+				} else {
+					//                    问题在一级标题，那么标记
+					signTitle = 21
+				}
+			} else {
+				indexTitle[formatTitle(line)] = true
+				signTitle = 1
+			}
+		} else if indexTitleLength >= 1 && (signTitle != 0) {
+			// 已经是第三个标题及之后
+			// 如果是只有一级标题，这个标题和前面的标题类型一致，那么就添加
+
+			if !hasTwoLevelTitle(line) {
+				indexTitle[formatTitle(line)] = true
+			}
+		}
+	}
+}
+
+// Helper: addTitleMap
+func hasPrombleInTitle(line string) bool {
+	problem := "问题"
+	if strings.Index(line, problem) == -1 {
+		return false
+	}
+	return true
+}
+
+// Helper: addTitleMap
+// 只有在长度为1时，计算是否有两级标题
+func hasTwoLevelTitle(secTitle string) bool {
+	tmpMap1 := map[string]bool{
+		"一": true, "二": true, "三": true, "四": true, "五": true,
+		"零": true, "九": true, "八": true, "七": true, "六": true,
+	}
+	tmpMap2 := map[string]bool{
+		"1": true, "2": true, "3": true, "4": true, "5": true,
+		"9": true, "0": true, "8": true, "7": true, "6": true,
+	}
+	firstTitle := ""
+	for i := range indexTitle {
+		firstTitle = i
+		break
+	}
+	firstTitlef, secTitlef := string([]rune(firstTitle)[0]), string([]rune(secTitle)[0]) // 获取前两个标题的第一个字
+	// 如果前两个标题 第一个字相同或者格式相同, 那么就只有一级标题，否则是两级
+	if (firstTitlef == secTitlef) ||
+		(tmpMap1[firstTitlef] && tmpMap1[secTitlef]) ||
+		(tmpMap2[firstTitlef] && tmpMap2[secTitlef]) {
+
+		return false
+	}
+	return true
 }
 
 // 是否string前段包含有数字
@@ -222,9 +283,13 @@ func formatTitle(title string) string {
 }
 
 // 回复 的开始标志
+// TODO: 未实现 （1）单纯一个回复 （2）直接回答
 func isAnswer(line string) bool {
 	// {{{
-	if line == "回复：" || line == "回复:" || line == "【回复】" || line == "【发行人说明】" {
+	AnswerSign := map[string]bool{
+		"回复hf:": true, "回复hf：": true,
+	}
+	if AnswerSign[line] {
 		return true
 	}
 	return false

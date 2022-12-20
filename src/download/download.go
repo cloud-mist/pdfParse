@@ -45,16 +45,29 @@ func ReadCsvAndDownLoad(filepath string) {
 		}
 
 		// 下载
-		csvRec := CsvFile{
-			Id:             record[0],
-			CompanyLink:    record[1],
-			CompanyName:    record[2],
-			FileAddr:       record[4],
-			FileName:       record[9],
-			DisclosureDate: record[10]}
+		var csvRec CsvFile
+		saveFileName := ""
 		// 每条记录放入csvRec结构体
-		index := csvRec.Id
-		saveFileName := index + "-" + csvRec.FileName + ".pdf"
+		if filepath == "../material/company-file-data/company-file-V3.csv" {
+			csvRec = CsvFile{
+				Id:             record[0],
+				CompanyLink:    record[1],
+				CompanyName:    record[2],
+				FileAddr:       record[4],
+				FileName:       record[9],
+				DisclosureDate: record[10]}
+			saveFileName = csvRec.Id + "-" + csvRec.FileName + ".pdf"
+		} else {
+			csvRec = CsvFile{
+				Id:             record[0],
+				CompanyLink:    "none",
+				CompanyName:    record[1],
+				FileAddr:       record[5],
+				FileName:       record[4],
+				DisclosureDate: record[6]}
+			saveFileName = csvRec.FileName + ".pdf"
+		}
+		// index := csvRec.Id
 		// fileUrl := csvRec.FileAddr
 		// saveFileBasePath := "../../downloadsPDF/"
 		// saveFilePath := saveFileBasePath + saveFileName

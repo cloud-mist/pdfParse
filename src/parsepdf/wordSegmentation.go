@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/go-ego/gse"
 )
@@ -19,7 +20,8 @@ var (
 	pdfResWords     []string        // pdf的分词过滤结果
 	compareWordsMap map[string]bool // 当前需要放入的词库
 	total           map[string]int  // 统计的词汇情况
-	vocLen          int
+	vocLen, vocNum  int
+	pdfResWordsLen  int
 	newJieba        gse.Segmenter
 )
 
@@ -44,6 +46,7 @@ func Divide(txtFilePath string) {
 	defer f.Close()
 	reader := bufio.NewReader(f)
 	pdfResWords = []string{} // 初始化
+	pdfResWordsLen = 0
 	for {
 		line, err := reader.ReadString('\n')
 		if err == io.EOF {
@@ -54,6 +57,7 @@ func Divide(txtFilePath string) {
 		}
 		for _, v := range newJieba.Trim(newJieba.Cut(line, true)) {
 			pdfResWords = append(pdfResWords, v)
+			pdfResWordsLen += utf8.RuneCountInString(v)
 			// words []string ， true hmm开启，
 		}
 	}
@@ -65,14 +69,17 @@ func Count() {
 	total = make(map[string]int)
 
 	// 暴力匹配
-	vocLen = 0
+	vocNum, vocLen = 0, 0
+
 	for i := range pdfResWords {
 		if compareWordsMap[pdfResWords[i]] {
-			vocLen++
+			vocLen += utf8.RuneCountInString(pdfResWords[i])
+			vocNum++
 			total[pdfResWords[i]]++
 		}
 	}
-	fmt.Println("匹配的单词总数：", vocLen)
+	fmt.Println("匹配的单词 字数：", vocLen)
+	fmt.Println("匹配的单词 词数：", vocNum)
 	fmt.Println("匹配的单词情况：")
 	// table := tablewriter.NewWriter(os.Stdout)
 	// for i, v := range total {
@@ -129,8 +136,8 @@ func OtherWordsDic() string {
 func WriteWordsVocNum(id, sign string) {
 	pf := database.PdfFile{ID: id}
 	if sign == "law" {
-		database.Db.Model(&pf).Updates(database.PdfFile{LawVocLen: vocLen})
+		database.Db.Model(&pf).Updates(database.PdfFile{LawVocLen: vocLen, LawVocNumber: vocNum, AnswerClearTextLen: pdfResWordsLen})
 	} else if sign == "account" {
-		database.Db.Model(&pf).Updates(database.PdfFile{AccountVocLen: vocLen})
+		database.Db.Model(&pf).Updates(database.PdfFile{AccountVocLen: vocLen, AccountVocNumber: vocNum, AnswerClearTextLen: pdfResWordsLen})
 	}
 }
