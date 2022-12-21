@@ -2,6 +2,7 @@ package parsepdf
 
 import (
 	"bufio"
+	"bytes"
 	"fmt"
 	"hello/database"
 	"io"
@@ -60,15 +61,16 @@ func ReadPdfV2(path string, textFilePath string) {
 
 // 将一个pdf分割成两个txt临时文件，一个问询，一个回复
 // 分词,分析
-func DivideTwoParts() {
+func DivideTwoParts(txtFilePath string) {
 	// {{{
 	// 1. 打开tmp文件准备操作
-	txtFilePath := "../material/tmpFile/tmp.txt"
 	f, err := os.Open(txtFilePath)
 	if err != nil {
 		log.Fatalln("[Parse.DivideTwoParts] open txtFile failed! Err:", err)
 	}
 	defer f.Close()
+
+	// 💫 预处理，删除页码，删除其他无意义词
 
 	// 2.创建两个临时文件，来写问询和回复的文本信息
 	f1, err := os.Create("../material/tmpFile/tmpPart1.txt") // 问询
@@ -149,7 +151,7 @@ func DivideTwoParts() {
 
 		totalLength += len([]rune(line)) // 不管是什么都要加
 	}
-	fmt.Printf("分割成功：各文本数量如下")
+	fmt.Printf("分割成功：各文本数量如下\n")
 	fmt.Printf("TotalLen:%v\nAnswerLength:%v\nQueLength:%v\n", totalLength, answerLength, queLength)
 	fmt.Println(indexTitle)
 	// }}}
@@ -167,129 +169,42 @@ func WriteSomeParseResToDB(id string) {
 // ---------------------------------------------------
 // 辅助函数
 
-func addTitleMapV2(line string) {
-	//{{{
-	reg := regexp.MustCompile(`(问题)?\d+.*`)
-	res := reg.FindString(line)
+// 预处理文本
+func EatSomeWords(txtFilePath string) {
+	needDelWords := []string{"科创板审核问询函回复报告", "审核问询函的回复",
+		"问询函回复", "问询函的回复"}
+	words, _ := os.ReadFile(txtFilePath)
+	reg := regexp.MustCompile(`8-\d+-\d+`)
+	res := reg.ReplaceAll(words, []byte(""))
 
-	titleDivideLine := "......."
-	if strings.Index(line, titleDivideLine) != -1 && strings.Index(line, "目录") == -1 {
-		if len(res) != 0 {
-			indexTitle[formatTitle(line)] = true
-		}
+	for _, v := range needDelWords {
+		res = bytes.ReplaceAll(res, []byte(v), []byte(""))
 	}
-	//}}}
+
+	os.WriteFile(txtFilePath, res, 0664)
 }
 
+// 将符合条件的问题标题加入map
 func addTitleMap(line string) {
 	titleDivideLine := "......."
-
-	// 只有在是目录标题，且不是目录两字的标题的时候运行
-	if strings.Index(line, titleDivideLine) != -1 &&
-		strings.Index(line, "目录") == -1 && strings.Index(line, "目 录") == -1 {
-		indexTitleLength := len(indexTitle)
-
-		if indexTitleLength == 0 {
-			indexTitle[formatTitle(line)] = true
-		} else if (indexTitleLength == 1) && (signTitle == 0) {
-			if hasTwoLevelTitle(line) {
-				if hasPrombleInTitle(line) {
-					// 如果 有两级标题，且问题在二级标题里，那么清空一级标题，且标记;
-					indexTitle = make(map[string]bool)
-					indexTitle[formatTitle(line)] = true
-					signTitle = 22
-				} else {
-					//                    问题在一级标题，那么标记
-					signTitle = 21
-				}
-			} else {
-				indexTitle[formatTitle(line)] = true
-				signTitle = 1
-			}
-		} else if indexTitleLength >= 1 && (signTitle != 0) {
-			// 已经是第三个标题及之后
-			// 如果是只有一级标题，这个标题和前面的标题类型一致，那么就添加
-
-			if !hasTwoLevelTitle(line) {
-				indexTitle[formatTitle(line)] = true
-			}
-		}
+	questionSign := "问题wt"
+	if strings.Index(line, questionSign) != -1 && strings.Index(line, titleDivideLine) != -1 {
+		indexTitle[formatTitle(line)] = true
 	}
-}
-
-// Helper: addTitleMap
-func hasPrombleInTitle(line string) bool {
-	problem := "问题"
-	if strings.Index(line, problem) == -1 {
-		return false
-	}
-	return true
-}
-
-// Helper: addTitleMap
-// 只有在长度为1时，计算是否有两级标题
-func hasTwoLevelTitle(secTitle string) bool {
-	tmpMap1 := map[string]bool{
-		"一": true, "二": true, "三": true, "四": true, "五": true,
-		"零": true, "九": true, "八": true, "七": true, "六": true,
-	}
-	tmpMap2 := map[string]bool{
-		"1": true, "2": true, "3": true, "4": true, "5": true,
-		"9": true, "0": true, "8": true, "7": true, "6": true,
-	}
-	firstTitle := ""
-	for i := range indexTitle {
-		firstTitle = i
-		break
-	}
-	firstTitlef, secTitlef := string([]rune(firstTitle)[0]), string([]rune(secTitle)[0]) // 获取前两个标题的第一个字
-	// 如果前两个标题 第一个字相同或者格式相同, 那么就只有一级标题，否则是两级
-	if (firstTitlef == secTitlef) ||
-		(tmpMap1[firstTitlef] && tmpMap1[secTitlef]) ||
-		(tmpMap2[firstTitlef] && tmpMap2[secTitlef]) {
-
-		return false
-	}
-	return true
-}
-
-// 是否string前段包含有数字
-func isIncludeNum(s string) bool {
-	for _, c := range formatTitle(s) {
-		if '0' <= c && c <= '9' {
-			return true
-		}
-	}
-	return false
-}
-
-// 判断是不是小标题
-func isLittleTitle(line string) bool {
-	_, afterDotLine, ok := strings.Cut(line, ".")
-	if !ok {
-		return true
-	}
-
-	if '0' <= afterDotLine[0] && afterDotLine[0] <= '9' {
-		return false
-	}
-	return true
 }
 
 // 提取.... 之前的东西并且去掉空格
 func formatTitle(title string) string {
-	res, _, _ := strings.Cut(title, "....")
+	//{{{
+	res, _, _ := strings.Cut(title, ".......")
 	return res
+	//}}}
 }
 
 // 回复 的开始标志
-// TODO: 未实现 （1）单纯一个回复 （2）直接回答
 func isAnswer(line string) bool {
 	// {{{
-	AnswerSign := map[string]bool{
-		"回复hf:": true, "回复hf：": true,
-	}
-	if AnswerSign[line] {
+	if strings.Index(line, "回复hf") != -1 {
 		return true
 	}
 	return false
