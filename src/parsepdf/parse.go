@@ -104,7 +104,7 @@ func DivideTwoParts(txtFilePath string) {
 
 		// 主部分
 		// 1.如果这行有标题,开始记问询数
-		if indexTitle[line] || turn == 1 {
+		if isTitle(line) || turn == 1 {
 			for {
 				line, err = reader.ReadString('\n')
 				if err == io.EOF {
@@ -134,7 +134,7 @@ func DivideTwoParts(txtFilePath string) {
 				}
 				line = strings.TrimSpace(line)
 				line = strings.Replace(line, " ", "", -1)
-				if indexTitle[line] {
+				if isTitle(line) {
 					queLength += len([]rune(line))
 					totalLength += len([]rune(line)) // 不管是什么都要加
 					writeQue.WriteString(line + "\n")
@@ -171,10 +171,23 @@ func WriteSomeParseResToDB(id string) {
 
 // 预处理文本
 func EatSomeWords(txtFilePath string) {
-	needDelWords := []string{"科创板审核问询函回复报告", "审核问询函的回复",
-		"问询函回复", "问询函的回复"}
+	needDelWords := []string{
+		"关于华熙生物科技股份有限公司首次公开发行股票并在科创板上市申请文件审核问询函之回复报告",
+		"科创板审核问询函回复报告",
+		"第一轮审核问询函的回复",
+		"审核问询函之回复报告",
+		"审核问询函之回复",
+		"审核问询函的回复",
+		"审核问询函回复报告",
+		"审核问询函回复意见",
+		"审核问询函回复",
+		"首轮问询函回复",
+		"首轮问询意见回复",
+		"问询函的回复",
+		"问询函回复",
+	}
 	words, _ := os.ReadFile(txtFilePath)
-	reg := regexp.MustCompile(`8-\d+-\d+`)
+	reg := regexp.MustCompile(`8-\d+-\d+-\d+|8-\d+-\d+`)
 	res := reg.ReplaceAll(words, []byte(""))
 
 	for _, v := range needDelWords {
@@ -201,16 +214,6 @@ func formatTitle(title string) string {
 	//}}}
 }
 
-// 回复 的开始标志
-func isAnswer(line string) bool {
-	// {{{
-	if strings.Index(line, "回复hf") != -1 {
-		return true
-	}
-	return false
-	//}}}
-}
-
 // 计算问题的个数,返回文本 （计算的是目录中问题个数）
 func countQueAmount() (int, string) {
 	// {{{{
@@ -222,5 +225,27 @@ func countQueAmount() (int, string) {
 
 	}
 	return count, text
+	//}}}
+}
+
+// 回复 的开始标志
+func isAnswer(line string) bool {
+	// {{{
+	if strings.Index(line, "回复hf") != -1 {
+		return true
+	}
+	return false
+	//}}}
+}
+
+// 问题开始标志
+func isTitle(line string) bool {
+	// {{{
+	for i := range indexTitle {
+		if strings.Index(line, i) != -1 && strings.Index(line, "........") == -1 {
+			return true
+		}
+	}
+	return false
 	//}}}
 }

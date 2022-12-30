@@ -80,12 +80,6 @@ func Count() {
 	}
 	fmt.Println("匹配的单词 字数：", vocLen)
 	fmt.Println("匹配的单词 词数：", vocNum)
-	fmt.Println("匹配的单词情况：")
-	// table := tablewriter.NewWriter(os.Stdout)
-	// for i, v := range total {
-	// 	table.Append([]string{i, strconv.Itoa(v)})
-	// }
-	// table.Render()
 }
 
 func AddCompareWords(wordsFilePath string) {

@@ -12,8 +12,8 @@ import (
 )
 
 func main() {
-	// mainDownload()
-	mainCalc()
+	mainDownload()
+	// mainCalc()
 
 }
 
