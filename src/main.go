@@ -33,8 +33,8 @@ func pdfToTxt() {
 func mainDownload() {
 	csvFilePath := "../material/company-file-data/company-file-V3.csv"
 	download.ReadCsvAndDownLoad(csvFilePath)
-	csvFilePath = "../material/company-file-data/company-file-add.csv"
-	download.ReadCsvAndDownLoad(csvFilePath)
+	// csvFilePath = "../material/company-file-data/company-file-add.csv"
+	// download.ReadCsvAndDownLoad(csvFilePath)
 }
 
 //2. 统计

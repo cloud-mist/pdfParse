@@ -3,7 +3,6 @@ package download
 import (
 	"encoding/csv"
 	"fmt"
-	"hello/database"
 	"io"
 	"log"
 	"net/http"
@@ -67,20 +66,20 @@ func ReadCsvAndDownLoad(filepath string) {
 				DisclosureDate: record[6]}
 			saveFileName = csvRec.FileName + ".pdf"
 		}
-		// index := csvRec.Id
-		// fileUrl := csvRec.FileAddr
-		// saveFileBasePath := "../../downloadsPDF/"
-		// saveFilePath := saveFileBasePath + saveFileName
-		// downOneFile(fileUrl, saveFilePath, index)
+		index := csvRec.Id
+		fileUrl := csvRec.FileAddr
+		saveFileBasePath := "../../downloadsPDF/"
+		saveFilePath := saveFileBasePath + saveFileName
+		downOneFile(fileUrl, saveFilePath, index)
 		//
 		// Todo: 必要内容保存到数据库
-		pf := database.PdfFile{
-			ID:          csvRec.Id,
-			CompanyLink: csvRec.CompanyLink,
-			CompanyName: csvRec.CompanyName,
-			FileName:    saveFileName,
-		}
-		database.Db.Create(&pf)
+		// pf := database.PdfFile{
+		// 	ID:          csvRec.Id,
+		// 	CompanyLink: csvRec.CompanyLink,
+		// 	CompanyName: csvRec.CompanyName,
+		// 	FileName:    saveFileName,
+		// }
+		// database.Db.Create(&pf)
 	}
 	// }}}
 }

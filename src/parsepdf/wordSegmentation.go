@@ -33,7 +33,7 @@ func init() {
 
 	newJieba, _ = gse.New()
 	newJieba.LoadDict(lawWordsFilePath + "," + accountingWordsFilePath + "," + financialWordsFilePath)
-	// newJieba.LoadDict(OtherWordsDic()) // 其他词库
+	newJieba.LoadDict(OtherWordsDic()) // 其他词库
 	newJieba.LoadStop(stopWordsPath)
 }
 
