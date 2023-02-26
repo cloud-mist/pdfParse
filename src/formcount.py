@@ -1,7 +1,7 @@
 import pdfplumber
+import os
 
-filePath = "/home/shawn/study/Project/crawl/downloadsPDF/77-688068.SH_热景生物_四轮反馈回复.pdf"
-# filePath = "/home/shawn/Desktop/myPhoto/学生基本信息表zx.pdf"
+allPdfPath = "$HOME/study/Project/crawl/downloadsPDF/"
 
 
 def count(filePath):
@@ -10,17 +10,21 @@ def count(filePath):
     manyImg = []
     with pdfplumber.open(filePath) as pdf:
         pages = pdf.pages
-        for page in pages:
+        length = len(pages)
+        for page in pages[1 : length - 5]:
             # image
             images = page.images
             for image in images:
                 for k, v in image.items():
                     if k == "height":
+                        # print(f"img: page:{page}, height:{v}")
                         manyImg.append(v)
 
+        for page in pages[1:]:
             # table
             tables = page.find_tables()
             for table in tables:
+                # print(f"table: page:{page}")
                 tableRowRes += len(table.rows)
 
             # totalRow
@@ -39,12 +43,23 @@ def count(filePath):
                 break
     # 计算imgHeight
     manyImg = set(manyImg)
+    # print(manyImg)
     for i in manyImg:
         imgHeight += i
 
-    print(
-        f"总行数：{totalRow}, 表格行数：{tableRowRes}, 图片行数： {imgHeight/oneLineHeight:.2f} \n图片高度：{imgHeight:.2f},一行的高度：{oneLineHeight:.2f}"
-    )
+    # print(
+    #     f"总行数：{totalRow}, 表格行数：{tableRowRes}, 图片行数： {imgHeight/oneLineHeight:.2f} \n图片高度：{imgHeight:.2f},一行的高度：{oneLineHeight:.2f}"
+    # )
+    return [totalRow, tableRowRes, imgHeight, oneLineHeight]
 
 
-count(filePath)
+# ----------------------------------------------------
+for fileName in os.listdir(allPdfPath):
+    filePath = allPdfPath + fileName
+    # print(filePath)
+    # count(filePath)
+    totalRow, tableRowRes, imgHeight, oneLineHeight = count(filePath)
+    with open("./res.csv", "a", encoding="utf-8") as f:
+        f.write(
+            f"{fileName},{totalRow},{tableRowRes},{imgHeight/oneLineHeight:.2f},{imgHeight:.2f},{oneLineHeight:.2f}\n"
+        )

@@ -17,7 +17,7 @@ type PdfFile struct {
 	DeletedAt gorm.DeletedAt `gorm:"index"`
 
 	CompanyName string // 公司名
-	CompanyLink string // 公司地址（项目动态） <TODO: 提取已受理时间，通过时间>
+	CompanyLink string // 公司地址（项目动态）      TODO: 提取已受理时间，通过时间
 	ProcessData string // 审核过程时间：通过CompanyLink 爬虫提取
 	Frequency   int    // 问询次数
 	FileName    string // 下载的pdf名字

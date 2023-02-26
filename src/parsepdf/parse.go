@@ -23,7 +23,7 @@ var (
 
 // pdf解析成txt
 func ReadPdf(path string) {
-	// {{{
+	// <<<
 	f, r, err := pdf.Open(path)
 	if err != nil {
 		log.Fatalln("[Parse.ReadPdf] Open pdf Failed! Err:", err)
@@ -43,12 +43,12 @@ func ReadPdf(path string) {
 		log.Fatalln("[Parse.ReadPdf] Copy pdf to tmp.txt Failed! Err:", err)
 	}
 	fmt.Println("[OK] Change Txt. File: ", path)
-	// }}}
+	// >>>
 }
 
 // 利用工具： `pdftotext` ,速度是自己写的6倍
 func ReadPdfV2(path string, textFilePath string) {
-	//{{{
+	//<<<
 	cmd := exec.Command("pdftotext", path, textFilePath)
 
 	err := cmd.Run()
@@ -56,13 +56,13 @@ func ReadPdfV2(path string, textFilePath string) {
 		log.Fatalln("[Parse.ReadPdfV2] change Failed! Err:", err)
 	}
 	fmt.Printf("[OK] Pdf Change to Txt. \nFileName: %v\n", path)
-	//}}}
+	//>>>
 }
 
 // 将一个pdf分割成两个txt临时文件，一个问询，一个回复
 // 分词,分析
 func DivideTwoParts(txtFilePath string) {
-	// {{{
+	// <<<
 	// 1. 打开tmp文件准备操作
 	f, err := os.Open(txtFilePath)
 	if err != nil {
@@ -154,7 +154,7 @@ func DivideTwoParts(txtFilePath string) {
 	fmt.Printf("分割成功：各文本数量如下\n")
 	fmt.Printf("TotalLen:%v\nAnswerLength:%v\nQueLength:%v\n", totalLength, answerLength, queLength)
 	fmt.Println(indexTitle)
-	// }}}
+	// >>>
 }
 
 // 结果部分写入数据库
@@ -208,15 +208,15 @@ func addTitleMap(line string) {
 
 // 提取.... 之前的东西并且去掉空格
 func formatTitle(title string) string {
-	//{{{
+	//<<<
 	res, _, _ := strings.Cut(title, ".......")
 	return res
-	//}}}
+	//>>>
 }
 
 // 计算问题的个数,返回文本 （计算的是目录中问题个数）
 func countQueAmount() (int, string) {
-	// {{{{
+	// <<<{
 	count := 0
 	text := ""
 	for i := range indexTitle {
@@ -225,27 +225,27 @@ func countQueAmount() (int, string) {
 
 	}
 	return count, text
-	//}}}
+	//>>>
 }
 
 // 回复 的开始标志
 func isAnswer(line string) bool {
-	// {{{
+	// <<<
 	if strings.Index(line, "回复hf") != -1 {
 		return true
 	}
 	return false
-	//}}}
+	//>>>
 }
 
 // 问题开始标志
 func isTitle(line string) bool {
-	// {{{
+	// <<<
 	for i := range indexTitle {
 		if strings.Index(line, i) != -1 && strings.Index(line, "........") == -1 {
 			return true
 		}
 	}
 	return false
-	//}}}
+	//>>>
 }
