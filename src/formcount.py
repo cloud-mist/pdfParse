@@ -1,7 +1,7 @@
 import pdfplumber
 import os
 
-allPdfPath = "$HOME/study/Project/crawl/downloadsPDF/"
+allPdfPath = "/home/shawn/study/Project/crawl/downloadsPDF/"
 
 
 def count(filePath):
@@ -56,6 +56,7 @@ def count(filePath):
 # ----------------------------------------------------
 for fileName in os.listdir(allPdfPath):
     filePath = allPdfPath + fileName
+    print(fileName)
     # print(filePath)
     # count(filePath)
     totalRow, tableRowRes, imgHeight, oneLineHeight = count(filePath)
